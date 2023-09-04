@@ -1,0 +1,7 @@
+
+*.spec
+*.ico
+build/
+dist/
+
+!assets/*
