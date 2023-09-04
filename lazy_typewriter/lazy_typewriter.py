@@ -26,7 +26,7 @@ class TypeText(ft.UserControl):
         self.update()
 
     def build(self):
-        self.type_str_field = ft.TextField(value=self.type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
+        self.type_str_field = ft.TextField(value=self.type_str_field_value, cursor_color=ft.colors.BLACK,
                                            color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
         return ft.Row(
             [
@@ -41,7 +41,7 @@ class TypeText(ft.UserControl):
 class TypeTextListView(ft.UserControl):
 
     def __init__(self, save_path=""):
-        super().__init__()
+        super().__init__(expand=1)
         self.save_path = self.get_save_path() if save_path == "" else save_path
         self.lv = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
 
