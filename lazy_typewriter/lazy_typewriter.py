@@ -5,10 +5,11 @@ import platform
 import flet as ft
 
 class TypeText(ft.UserControl):
-    def __init__(self, lv: ft.ListView, type_str_field_value=""):
+    def __init__(self, lv: ft.ListView, vm_mode_switch_btn: ft.Switch, type_str_field_value=""):
         super().__init__()
         self.type_str_field_value = type_str_field_value
         self.lv = lv
+        self.vm_mode_switch_btn = vm_mode_switch_btn
 
     def delete_text_field(self, e):
         self.lv.controls.remove(self)
@@ -22,7 +23,10 @@ class TypeText(ft.UserControl):
         elif platform.system() == 'Darwin':
             keyboard.press_and_release('command+tab')
         time.sleep(0.3)
-        keyboard.write(self.type_str_field.value, delay=0.01)
+        if self.vm_mode_switch_btn.value:
+            keyboard.press_and_release(self._convert_vm_type_str(self.type_str_field.value))
+        else:
+            keyboard.write(self.type_str_field.value, delay=0.01)
         self.update()
 
     def build(self):
@@ -37,13 +41,30 @@ class TypeText(ft.UserControl):
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         )
+    
+    def _convert_vm_type_str(self, type_str: str):
+        converted_type_str = ""
+        need_convert_char = "~!@#$%^&*()_+{}|:\"<>?ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        # Some key can't use shift + original_key on press_and_release function, such as _ + < ?
+        mapping_convert_char = "`1234567890_=[]\\;'<.?abcdefghijklmnopqrstuvwxyz"
+        for char in type_str:
+            if not char.isascii():
+                continue
+            if char in need_convert_char:
+                converted_type_str += f"shift+{mapping_convert_char[need_convert_char.index(char)]}, "
+            elif char == " ":
+                converted_type_str += "space, "
+            else:
+                converted_type_str += f"{char}, "
+        return converted_type_str.strip(", ")
 
 class TypeTextListView(ft.UserControl):
 
-    def __init__(self, save_path=""):
+    def __init__(self, vm_mode_switch_btn: ft.Switch, save_path=""):
         super().__init__(expand=1)
         self.save_path = self.get_save_path() if save_path == "" else save_path
         self.lv = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
+        self.vm_mode_switch_btn = vm_mode_switch_btn
 
     def get_save_path(self):
         if platform.system() == 'Windows':
@@ -56,13 +77,13 @@ class TypeTextListView(ft.UserControl):
             with open(self.save_path, "r", encoding='utf-8') as f:
                 for line in f.readlines():
                     self.lv.controls.append(TypeText(
-                        self.lv, type_str_field_value=line.strip()))
+                        self.lv, self.vm_mode_switch_btn, type_str_field_value=line.strip()))
         if self.lv.controls == []:
             self.lv.controls.append(TypeText(self.lv))
         self.update()
 
     def add_typing_text_field(self, e):
-        self.lv.controls.append(TypeText(self.lv))
+        self.lv.controls.append(TypeText(self.lv, self.vm_mode_switch_btn))
         self.update()
 
     def save_content(self, e):
@@ -80,13 +101,14 @@ class TypeTextListView(ft.UserControl):
 def main(page: ft.Page):
     page.title = "Lazy typewriter"
     page.window_height = 343
-    page.window_width = 470
+    page.window_width = 480
     page.window_min_height = 343
-    page.window_min_width = 470
+    page.window_min_width = 480
     page.window_always_on_top = True
     page.bgcolor = ft.colors.GREY_800
 
-    type_text_list_view = TypeTextListView()
+    vm_mode_switch_btn = ft.Switch(label="VM mode", label_position=ft.LabelPosition.LEFT, value=False, scale=0.9)
+    type_text_list_view = TypeTextListView(vm_mode_switch_btn)
 
     def pin_window(e):
         page.window_always_on_top = not page.window_always_on_top
@@ -105,6 +127,7 @@ def main(page: ft.Page):
         center_title=False,
         bgcolor=ft.colors.BLACK45,
         actions=[
+            vm_mode_switch_btn,
             ft.IconButton(ft.icons.ADD, on_click=add_typing_text_field),
             ft.IconButton(ft.icons.SAVE, on_click=save_content),
             ft.IconButton(ft.icons.PUSH_PIN, on_click=pin_window)
