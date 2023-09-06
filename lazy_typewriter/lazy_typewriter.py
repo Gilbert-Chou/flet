@@ -4,12 +4,16 @@ import keyboard
 import platform
 import flet as ft
 
+from pynput.keyboard import Controller as KeyboardController
+from pynput.keyboard import Key as KeyboardKey
+
 class TypeText(ft.UserControl):
     def __init__(self, lv: ft.ListView, vm_mode_switch_btn: ft.Switch, type_str_field_value=""):
         super().__init__()
         self.type_str_field_value = type_str_field_value
         self.lv = lv
         self.vm_mode_switch_btn = vm_mode_switch_btn
+        self.pynput_keyboard = KeyboardController()
 
     def delete_text_field(self, e):
         self.lv.controls.remove(self)
@@ -24,13 +28,13 @@ class TypeText(ft.UserControl):
             keyboard.press_and_release('command+tab')
         time.sleep(0.3)
         if self.vm_mode_switch_btn.value:
-            keyboard.press_and_release(self._convert_vm_type_str(self.type_str_field.value))
+            self._type_text_with_pynput(self.type_str_field.value)
         else:
             keyboard.write(self.type_str_field.value, delay=0.01)
         self.update()
 
     def build(self):
-        self.type_str_field = ft.TextField(value=self.type_str_field_value, cursor_color=ft.colors.BLACK,
+        self.type_str_field = ft.TextField(value=self.type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
                                            color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
         return ft.Row(
             [
@@ -42,28 +46,31 @@ class TypeText(ft.UserControl):
             alignment=ft.MainAxisAlignment.CENTER,
         )
     
-    def _convert_vm_type_str(self, type_str: str):
-        converted_type_str = ""
+    def _type_text_with_pynput(self, type_str: str):
         need_convert_char = "~!@#$%^&*()_+{}|:\"<>?ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        # Some key can't use shift + original_key on press_and_release function, such as _ + < ?
-        mapping_convert_char = "`1234567890_=[]\\;'<.?abcdefghijklmnopqrstuvwxyz"
+        mapping_convert_char = "`1234567890-=[]\\;',./abcdefghijklmnopqrstuvwxyz"
         for char in type_str:
             if not char.isascii():
                 continue
             if char in need_convert_char:
-                converted_type_str += f"shift+{mapping_convert_char[need_convert_char.index(char)]}, "
+                self.pynput_keyboard.press(KeyboardKey.shift_l)
+                self.pynput_keyboard.press(mapping_convert_char[need_convert_char.index(char)])
+                self.pynput_keyboard.release(KeyboardKey.shift_l)
+                self.pynput_keyboard.release(mapping_convert_char[need_convert_char.index(char)])
             elif char == " ":
-                converted_type_str += "space, "
+                self.pynput_keyboard.press(KeyboardKey.space)
+                self.pynput_keyboard.release(KeyboardKey.space)
             else:
-                converted_type_str += f"{char}, "
-        return converted_type_str.strip(", ")
+                self.pynput_keyboard.press(char)
+                self.pynput_keyboard.release(char)
+            time.sleep(0.01)
 
 class TypeTextListView(ft.UserControl):
 
     def __init__(self, vm_mode_switch_btn: ft.Switch, save_path=""):
         super().__init__(expand=1)
         self.save_path = self.get_save_path() if save_path == "" else save_path
-        self.lv = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
+        self.lv = ft.ListView(expand=1, spacing=10, padding=20)
         self.vm_mode_switch_btn = vm_mode_switch_btn
 
     def get_save_path(self):
@@ -83,7 +90,7 @@ class TypeTextListView(ft.UserControl):
         self.update()
 
     def add_typing_text_field(self, e):
-        self.lv.controls.append(TypeText(self.lv, self.vm_mode_switch_btn))
+        self.lv.controls.insert(0, TypeText(self.lv, self.vm_mode_switch_btn))
         self.update()
 
     def save_content(self, e):
