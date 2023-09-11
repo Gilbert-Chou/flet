@@ -57,7 +57,7 @@ class TypeText(ft.UserControl):
 
     def _drag_accept(self, e: ft.DragTargetAcceptEvent):
         src = self.page.get_control(e.src_id)
-        target_text = ""
+        target_text = None
 
         for line in self.lv.controls:
             if line.drag_icon == src.content:
@@ -66,7 +66,7 @@ class TypeText(ft.UserControl):
                 line.update()
                 break
 
-        if target_text == "":
+        if target_text is None:
             raise Exception("target icon not found")
 
         self.type_str_field.value = target_text
