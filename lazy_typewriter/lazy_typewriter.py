@@ -7,6 +7,7 @@ import flet as ft
 from pynput.keyboard import Controller as KeyboardController
 from pynput.keyboard import Key as KeyboardKey
 
+
 class TypeText(ft.UserControl):
     def __init__(self, lv: ft.ListView, vm_mode_switch_btn: ft.Switch, type_str_field_value=""):
         super().__init__()
@@ -36,16 +37,38 @@ class TypeText(ft.UserControl):
     def build(self):
         self.type_str_field = ft.TextField(value=self.type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
                                            color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
-        return ft.Row(
-            [
-                self.type_str_field,
-                ft.IconButton(ft.icons.KEYBOARD_RETURN,
-                              on_click=self.keyboard_type),
-                ft.IconButton(ft.icons.DELETE, on_click=self.delete_text_field)
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
+        return ft.DragTarget(
+            group="number",
+            on_accept=self._drag_accept,
+            content=ft.Draggable(
+                group="number",
+                content=ft.Row(
+                    [
+                        self.type_str_field,
+                        ft.IconButton(ft.icons.KEYBOARD_RETURN,
+                                      on_click=self.keyboard_type),
+                        ft.IconButton(ft.icons.DELETE,
+                                      on_click=self.delete_text_field)
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+            ),
         )
     
+    def _drag_accept(self, e: ft.DragTargetAcceptEvent):
+        # get draggable (source) control by its ID
+        src = self.page.get_control(e.src_id)
+        src_text = src.content.controls[0].value
+        target_text = e.control.content.content.controls[0].value
+
+        # update text inside draggable control
+        src.content.controls[0].value = target_text
+        # update text inside drag target control
+        e.control.content.content.controls[0].value = src_text
+
+        self.update()
+        src.content.update()
+
     def _type_text_with_pynput(self, type_str: str):
         need_convert_char = "~!@#$%^&*()_+{}|:\"<>?ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         mapping_convert_char = "`1234567890-=[]\\;',./abcdefghijklmnopqrstuvwxyz"
@@ -54,9 +77,11 @@ class TypeText(ft.UserControl):
                 continue
             if char in need_convert_char:
                 self.pynput_keyboard.press(KeyboardKey.shift_l)
-                self.pynput_keyboard.press(mapping_convert_char[need_convert_char.index(char)])
+                self.pynput_keyboard.press(
+                    mapping_convert_char[need_convert_char.index(char)])
                 self.pynput_keyboard.release(KeyboardKey.shift_l)
-                self.pynput_keyboard.release(mapping_convert_char[need_convert_char.index(char)])
+                self.pynput_keyboard.release(
+                    mapping_convert_char[need_convert_char.index(char)])
             elif char == " ":
                 self.pynput_keyboard.press(KeyboardKey.space)
                 self.pynput_keyboard.release(KeyboardKey.space)
@@ -64,6 +89,7 @@ class TypeText(ft.UserControl):
                 self.pynput_keyboard.press(char)
                 self.pynput_keyboard.release(char)
             time.sleep(0.01)
+
 
 class TypeTextListView(ft.UserControl):
 
@@ -105,6 +131,7 @@ class TypeTextListView(ft.UserControl):
     def build(self):
         return self.lv
 
+
 def main(page: ft.Page):
     page.title = "Lazy typewriter"
     page.window_height = 343
@@ -114,7 +141,8 @@ def main(page: ft.Page):
     page.window_always_on_top = True
     page.bgcolor = ft.colors.GREY_800
 
-    vm_mode_switch_btn = ft.Switch(label="VM mode", label_position=ft.LabelPosition.LEFT, value=False, scale=0.9)
+    vm_mode_switch_btn = ft.Switch(
+        label="VM mode", label_position=ft.LabelPosition.LEFT, value=False, scale=0.9)
     type_text_list_view = TypeTextListView(vm_mode_switch_btn)
 
     def pin_window(e):
@@ -142,5 +170,6 @@ def main(page: ft.Page):
     )
     page.add(type_text_list_view)
     type_text_list_view.restore_saved_content()
+
 
 ft.app(target=main, assets_dir="assets")
