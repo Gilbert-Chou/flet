@@ -37,37 +37,40 @@ class TypeText(ft.UserControl):
     def build(self):
         self.type_str_field = ft.TextField(value=self.type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
                                            color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
-        return ft.DragTarget(
-            group="number",
-            on_accept=self._drag_accept,
-            content=ft.Draggable(
-                group="number",
-                content=ft.Row(
-                    [
-                        self.type_str_field,
-                        ft.IconButton(ft.icons.KEYBOARD_RETURN,
-                                      on_click=self.keyboard_type),
-                        ft.IconButton(ft.icons.DELETE,
-                                      on_click=self.delete_text_field)
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
+        self.drag_icon = ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.8)
+        return ft.Row(
+            [
+                ft.DragTarget(
+                    on_accept=self._drag_accept,
+                    content=ft.Draggable(
+                        content=self.drag_icon,
+                    ),
                 ),
-            ),
+                self.type_str_field,
+                ft.IconButton(ft.icons.KEYBOARD_RETURN,
+                              on_click=self.keyboard_type),
+                ft.IconButton(ft.icons.DELETE,
+                              on_click=self.delete_text_field)
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
         )
-    
+
     def _drag_accept(self, e: ft.DragTargetAcceptEvent):
-        # get draggable (source) control by its ID
         src = self.page.get_control(e.src_id)
-        src_text = src.content.controls[0].value
-        target_text = e.control.content.content.controls[0].value
+        target_text = ""
 
-        # update text inside draggable control
-        src.content.controls[0].value = target_text
-        # update text inside drag target control
-        e.control.content.content.controls[0].value = src_text
+        for line in self.lv.controls:
+            if line.drag_icon == src.content:
+                target_text = line.type_str_field.value
+                line.type_str_field.value = self.type_str_field.value
+                line.update()
+                break
 
+        if target_text == "":
+            raise Exception("target icon not found")
+
+        self.type_str_field.value = target_text
         self.update()
-        src.content.update()
 
     def _type_text_with_pynput(self, type_str: str):
         need_convert_char = "~!@#$%^&*()_+{}|:\"<>?ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -135,9 +138,9 @@ class TypeTextListView(ft.UserControl):
 def main(page: ft.Page):
     page.title = "Lazy typewriter"
     page.window_height = 343
-    page.window_width = 480
+    page.window_width = 500
     page.window_min_height = 343
-    page.window_min_width = 480
+    page.window_min_width = 500
     page.window_always_on_top = True
     page.bgcolor = ft.colors.GREY_800
 
