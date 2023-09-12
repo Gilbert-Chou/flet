@@ -7,13 +7,14 @@ import flet as ft
 from pynput.keyboard import Controller as KeyboardController
 from pynput.keyboard import Key as KeyboardKey
 
-
 class TypeText(ft.UserControl):
     def __init__(self, lv: ft.ListView, vm_mode_switch_btn: ft.Switch, type_str_field_value=""):
         super().__init__()
-        self.type_str_field_value = type_str_field_value
         self.lv = lv
         self.vm_mode_switch_btn = vm_mode_switch_btn
+        self.type_str_field = ft.TextField(value=type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
+                                           color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
+        self.drag_icon = ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.8)
         self.pynput_keyboard = KeyboardController()
 
     def delete_text_field(self, e):
@@ -35,9 +36,6 @@ class TypeText(ft.UserControl):
         self.update()
 
     def build(self):
-        self.type_str_field = ft.TextField(value=self.type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
-                                           color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
-        self.drag_icon = ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.8)
         return ft.DragTarget(
             on_accept=self._drag_accept,
             content=ft.Row(
@@ -58,20 +56,38 @@ class TypeText(ft.UserControl):
 
     def _drag_accept(self, e: ft.DragTargetAcceptEvent):
         src = self.page.get_control(e.src_id)
-        target_text = None
+        srcouce_index = None
+        target_index = None
 
-        for line in self.lv.controls:
+        for i, line in enumerate(self.lv.controls):
             if line.drag_icon == src.content:
-                target_text = line.type_str_field.value
-                line.type_str_field.value = self.type_str_field.value
-                line.update()
+                srcouce_index = i
+            if line.drag_icon == self.drag_icon:
+                target_index = i
+
+        if srcouce_index is None or target_index is None:
+            raise Exception("Can't find srcouce_index or target_index")
+
+        if srcouce_index == target_index:
+            self.lv.update()
+            return
+
+        for i, line in enumerate(self.lv.controls):
+            if line.drag_icon == src.content:
+                srcouce = self.lv.controls.pop(i)
                 break
 
-        if target_text is None:
-            raise Exception("target icon not found")
+        self.lv.update()
 
-        self.type_str_field.value = target_text
-        self.update()
+        for i, line in enumerate(self.lv.controls):
+            if line.drag_icon == self.drag_icon:
+                if srcouce_index > target_index:
+                    self.lv.controls.insert(i, srcouce)
+                else:
+                    self.lv.controls.insert(i+1, srcouce)
+                break
+
+        self.lv.update()
 
     def _type_text_with_pynput(self, type_str: str):
         need_convert_char = "~!@#$%^&*()_+{}|:\"<>?ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -116,7 +132,7 @@ class TypeTextListView(ft.UserControl):
                     self.lv.controls.append(TypeText(
                         self.lv, self.vm_mode_switch_btn, type_str_field_value=line.strip()))
         if self.lv.controls == []:
-            self.lv.controls.append(TypeText(self.lv))
+            self.lv.controls.append(TypeText(self.lv, self.vm_mode_switch_btn))
         self.update()
 
     def add_typing_text_field(self, e):
