@@ -38,21 +38,21 @@ class TypeText(ft.UserControl):
         self.type_str_field = ft.TextField(value=self.type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
                                            color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
         self.drag_icon = ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.8)
-        return ft.Row(
-            [
-                ft.DragTarget(
-                    on_accept=self._drag_accept,
-                    content=ft.Draggable(
+        return ft.DragTarget(
+            on_accept=self._drag_accept,
+            content=ft.Row(
+                [
+                    ft.Draggable(
                         content=self.drag_icon,
                     ),
-                ),
-                self.type_str_field,
-                ft.IconButton(ft.icons.KEYBOARD_RETURN,
-                              on_click=self.keyboard_type),
-                ft.IconButton(ft.icons.DELETE,
-                              on_click=self.delete_text_field)
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
+                    self.type_str_field,
+                    ft.IconButton(ft.icons.KEYBOARD_RETURN,
+                                  on_click=self.keyboard_type),
+                    ft.IconButton(ft.icons.DELETE,
+                                  on_click=self.delete_text_field)
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+            ),
         )
 
     def _drag_accept(self, e: ft.DragTargetAcceptEvent):
