@@ -44,6 +44,7 @@ class TypeText(ft.UserControl):
                 [
                     ft.Draggable(
                         content=self.drag_icon,
+                        content_when_dragging=ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.8, color=ft.colors.PRIMARY),
                     ),
                     self.type_str_field,
                     ft.IconButton(ft.icons.KEYBOARD_RETURN,
