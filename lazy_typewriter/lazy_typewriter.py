@@ -160,6 +160,7 @@ def main(page: ft.Page):
     page.window_min_width = 500
     page.window_always_on_top = True
     page.bgcolor = ft.colors.GREY_800
+    page.theme_mode = ft.ThemeMode.DARK
 
     vm_mode_switch_btn = ft.Switch(
         label="VM mode", label_position=ft.LabelPosition.LEFT, value=False, scale=0.9)
