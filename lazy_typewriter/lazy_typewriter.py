@@ -8,9 +8,10 @@ from pynput.keyboard import Controller as KeyboardController
 from pynput.keyboard import Key as KeyboardKey
 
 class TypeText(ft.UserControl):
-    def __init__(self, lv: ft.ListView, vm_mode_switch_btn: ft.Switch, type_str_field_value=""):
+    def __init__(self, lv: ft.ListView, vm_mode_switch_btn: ft.Switch, trigger_snack_bar, type_str_field_value=""):
         super().__init__()
         self.lv = lv
+        self.trigger_snack_bar = trigger_snack_bar
         self.vm_mode_switch_btn = vm_mode_switch_btn
         self.type_str_field = ft.TextField(value=type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
                                            color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
@@ -34,6 +35,7 @@ class TypeText(ft.UserControl):
         else:
             keyboard.write(self.type_str_field.value, delay=0.01)
         self.update()
+        self.trigger_snack_bar(e, "Typed")
 
     def build(self):
         return ft.DragTarget(
@@ -113,8 +115,9 @@ class TypeText(ft.UserControl):
 
 class TypeTextListView(ft.UserControl):
 
-    def __init__(self, vm_mode_switch_btn: ft.Switch, save_path=""):
+    def __init__(self, vm_mode_switch_btn: ft.Switch, trigger_snack_bar, save_path=""):
         super().__init__(expand=1)
+        self.trigger_snack_bar = trigger_snack_bar
         self.save_path = self.get_save_path() if save_path == "" else save_path
         self.lv = ft.ListView(expand=1, spacing=10, padding=20)
         self.vm_mode_switch_btn = vm_mode_switch_btn
@@ -130,13 +133,13 @@ class TypeTextListView(ft.UserControl):
             with open(self.save_path, "r", encoding='utf-8') as f:
                 for line in f.readlines():
                     self.lv.controls.append(TypeText(
-                        self.lv, self.vm_mode_switch_btn, type_str_field_value=line.strip()))
+                        self.lv, self.vm_mode_switch_btn, self.trigger_snack_bar, type_str_field_value=line.strip()))
         if self.lv.controls == []:
-            self.lv.controls.append(TypeText(self.lv, self.vm_mode_switch_btn))
+            self.lv.controls.append(TypeText(self.lv, self.vm_mode_switch_btn, self.trigger_snack_bar))
         self.update()
 
     def add_typing_text_field(self, e):
-        self.lv.controls.insert(0, TypeText(self.lv, self.vm_mode_switch_btn))
+        self.lv.controls.insert(0, TypeText(self.lv, self.vm_mode_switch_btn, self.trigger_snack_bar))
         self.update()
 
     def save_content(self, e):
@@ -147,10 +150,11 @@ class TypeTextListView(ft.UserControl):
             for control in self.lv.controls:
                 if isinstance(control, TypeText) and control.type_str_field.value != "":
                     f.write(control.type_str_field.value + "\n")
+        
+        self.trigger_snack_bar(e, "Saved")
 
     def build(self):
         return self.lv
-
 
 def main(page: ft.Page):
     page.title = "Lazy typewriter"
@@ -164,11 +168,25 @@ def main(page: ft.Page):
 
     vm_mode_switch_btn = ft.Switch(
         label="VM mode", label_position=ft.LabelPosition.LEFT, value=False, scale=0.9)
-    type_text_list_view = TypeTextListView(vm_mode_switch_btn)
+        
+    def trigger_snack_bar(e, text):
+        page.snack_bar = ft.SnackBar(
+            content=ft.Text(text, color=ft.colors.BLACK, weight=ft.FontWeight.BOLD),
+            show_close_icon=True,
+            duration=500,
+            bgcolor=ft.colors.GREEN_400,
+        )
+        page.snack_bar.open = True
+        page.update()
+
+    type_text_list_view = TypeTextListView(vm_mode_switch_btn, trigger_snack_bar)
 
     def pin_window(e):
         page.window_always_on_top = not page.window_always_on_top
+        pin_icon.rotate = ft.Rotate(angle=44.5 if page.window_always_on_top else 0)
         page.update()
+    
+    pin_icon = ft.IconButton(ft.icons.PUSH_PIN, rotate=ft.Rotate(angle=44.5), on_click=pin_window)
 
     def add_typing_text_field(e):
         type_text_list_view.add_typing_text_field(e)
@@ -186,7 +204,7 @@ def main(page: ft.Page):
             vm_mode_switch_btn,
             ft.IconButton(ft.icons.ADD, on_click=add_typing_text_field),
             ft.IconButton(ft.icons.SAVE, on_click=save_content),
-            ft.IconButton(ft.icons.PUSH_PIN, on_click=pin_window)
+            pin_icon
         ],
     )
     page.add(type_text_list_view)
