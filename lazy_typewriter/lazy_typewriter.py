@@ -14,8 +14,8 @@ class TypeText(ft.UserControl):
         self.trigger_snack_bar = trigger_snack_bar
         self.vm_mode_switch_btn = vm_mode_switch_btn
         self.type_str_field = ft.TextField(value=type_str_field_value, autofocus=True, cursor_color=ft.colors.BLACK,
-                                           color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, width=300, bgcolor=ft.colors.GREY_400)
-        self.drag_icon = ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.8)
+                                           color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, expand=True, width=300, bgcolor=ft.colors.GREY_400)
+        self.drag_icon = ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.80)
         self.pynput_keyboard = KeyboardController()
 
     def delete_text_field(self, e):
