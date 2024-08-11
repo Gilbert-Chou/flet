@@ -4,10 +4,33 @@ import keyboard
 import platform
 import flet as ft
 
+from config_singleton import sys_config
 from pynput.keyboard import Controller as KeyboardController
 from pynput.keyboard import Key as KeyboardKey
 
+    
+class SmallPopupMenuItem(ft.PopupMenuItem):
+
+    def __init__(self, page: ft.Page, text: str, config_name: str, customized_on_click=None):
+        check_icon = ft.Icon(ft.icons.CHECK if getattr(sys_config, config_name) else "", size=20) 
+        container = ft.Container(
+            content=ft.Row(
+                [check_icon, ft.Text(text)],
+                alignment=ft.MainAxisAlignment
+            ),
+        )
+        def on_click(e):
+            is_checked_now = not getattr(sys_config, config_name)
+            setattr(sys_config, config_name, is_checked_now)
+            check_icon.name = ft.icons.CHECK if is_checked_now else ""
+            if customized_on_click:
+                customized_on_click(e)
+            page.update()
+
+        return super().__init__(content=container, on_click=on_click, height=1, checked=None)
+
 class TypeText(ft.UserControl):
+
     def __init__(self, lv: ft.ListView, vm_mode_switch_btn: ft.Switch, trigger_snack_bar, type_str_field_value=""):
         super().__init__()
         self.lv = lv
@@ -17,6 +40,7 @@ class TypeText(ft.UserControl):
                                            color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, expand=True, width=300, bgcolor=ft.colors.GREY_400)
         self.drag_icon = ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.80)
         self.pynput_keyboard = KeyboardController()
+        self.build()
 
     def delete_text_field(self, e):
         self.lv.controls.remove(self)
@@ -113,7 +137,7 @@ class TypeText(ft.UserControl):
             time.sleep(0.01)
 
 
-class TypeTextListView(ft.UserControl):
+class TypeTextListView(ft.ListView):
 
     def __init__(self, vm_mode_switch_btn: ft.Switch, trigger_snack_bar, save_path=""):
         super().__init__(expand=1)
@@ -158,11 +182,11 @@ class TypeTextListView(ft.UserControl):
 
 def main(page: ft.Page):
     page.title = "Lazy typewriter"
-    page.window_height = 343
-    page.window_width = 500
-    page.window_min_height = 343
-    page.window_min_width = 500
-    page.window_always_on_top = True
+    page.window.height = 343
+    page.window.width = 500
+    page.window.min_height = 343
+    page.window.min_width = 500
+    page.window.always_on_top = True
     page.bgcolor = ft.colors.GREY_800
     page.theme_mode = ft.ThemeMode.DARK
 
@@ -182,18 +206,14 @@ def main(page: ft.Page):
     type_text_list_view = TypeTextListView(vm_mode_switch_btn, trigger_snack_bar)
 
     def pin_window(e):
-        page.window_always_on_top = not page.window_always_on_top
-        pin_icon.rotate = ft.Rotate(angle=44.5 if page.window_always_on_top else 0)
-        page.update()
-    
-    pin_icon = ft.IconButton(ft.icons.PUSH_PIN, rotate=ft.Rotate(angle=44.5), on_click=pin_window)
+        page.window.always_on_top = not page.window.always_on_top
 
     def add_typing_text_field(e):
         type_text_list_view.add_typing_text_field(e)
 
     def save_content(e):
         type_text_list_view.save_content(e)
-
+    
     page.appbar = ft.AppBar(
         leading=ft.Icon(ft.icons.KEYBOARD_OUTLINED),
         leading_width=40,
@@ -201,10 +221,17 @@ def main(page: ft.Page):
         center_title=False,
         bgcolor=ft.colors.BLACK45,
         actions=[
-            vm_mode_switch_btn,
             ft.IconButton(ft.icons.ADD, on_click=add_typing_text_field),
             ft.IconButton(ft.icons.SAVE, on_click=save_content),
-            pin_icon
+            ft.PopupMenuButton(
+                items=[
+                    SmallPopupMenuItem(page=page, text="VM mode", config_name="vm_mode"),
+                    ft.PopupMenuItem(),  # divider
+                    SmallPopupMenuItem(page=page, text="Pin", config_name="pin", customized_on_click=pin_window),
+                    ft.PopupMenuItem(),  # divider
+                    SmallPopupMenuItem(page=page, text="Slow mode", config_name="slow_mode"),
+                ]
+            ),
         ],
     )
     page.add(type_text_list_view)
