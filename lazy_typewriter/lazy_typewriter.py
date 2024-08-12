@@ -117,9 +117,11 @@ class TypeText(ft.Row):
                 self.pynput_keyboard.press(KeyboardKey.shift_l)
                 self.pynput_keyboard.press(
                     mapping_convert_char[need_convert_char.index(char)])
+                self._slow_mode()
                 self.pynput_keyboard.release(KeyboardKey.shift_l)
                 self.pynput_keyboard.release(
                     mapping_convert_char[need_convert_char.index(char)])
+                self._slow_mode()
             elif char == " ":
                 self.pynput_keyboard.press(KeyboardKey.space)
                 self.pynput_keyboard.release(KeyboardKey.space)
@@ -127,6 +129,10 @@ class TypeText(ft.Row):
                 self.pynput_keyboard.press(char)
                 self.pynput_keyboard.release(char)
             time.sleep(0.01)
+    
+    def _slow_mode(self):
+        if getattr(sys_config, "slow_mode"):
+            time.sleep(getattr(sys_config, "slow_mode_time"))
 
 
 class TypeTextListView(ft.ListView):
@@ -189,13 +195,14 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
        
     def trigger_snack_bar(e, text):
-        page.snack_bar = ft.SnackBar(
+        snack_bar = ft.SnackBar(
             content=ft.Text(text, color=ft.colors.BLACK, weight=ft.FontWeight.BOLD),
             show_close_icon=True,
             duration=500,
             bgcolor=ft.colors.GREEN_400,
         )
-        page.snack_bar.open = True
+        snack_bar.open = True
+        page.overlay.append(snack_bar)
         page.update()
 
     type_text_list_view = TypeTextListView(trigger_snack_bar)

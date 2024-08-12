@@ -9,5 +9,6 @@ class _SysConfig():
         self.pin = True 
         self.vm_mode = True
         self.slow_mode = False
+        self.slow_mode_time = 0.05
 
 sys_config = _SysConfig()
