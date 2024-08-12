@@ -51,7 +51,10 @@ class TypeText(ft.Row):
         ]
 
     def delete_text_field(self, e):
-        self.lv.controls.remove(self)
+        for i, line in enumerate(self.lv.controls):
+            if line.content.content.drag_icon == self.drag_icon:
+                self.lv.controls.pop(i)
+                break
         self.lv.update()
 
     def keyboard_type(self, e):
