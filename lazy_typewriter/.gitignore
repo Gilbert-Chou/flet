@@ -3,5 +3,6 @@
 *.ico
 build/
 dist/
+__pycache__/
 
 !assets/*
