@@ -8,7 +8,7 @@ from config_singleton import sys_config
 from pynput.keyboard import Controller as KeyboardController
 from pynput.keyboard import Key as KeyboardKey
 
-    
+
 class SettingPopupMenuItem(ft.PopupMenuItem):
 
     def __init__(self, page: ft.Page, text: str, config_name: str, customized_on_click=None):
@@ -19,6 +19,7 @@ class SettingPopupMenuItem(ft.PopupMenuItem):
                 alignment=ft.MainAxisAlignment
             ),
         )
+
         def on_click(e):
             is_checked_now = not getattr(sys_config, config_name)
             setattr(sys_config, config_name, is_checked_now)
@@ -28,6 +29,7 @@ class SettingPopupMenuItem(ft.PopupMenuItem):
             page.update()
 
         return super().__init__(content=container, on_click=on_click, height=1, checked=None)
+
 
 class TypeText(ft.Row):
 
@@ -114,6 +116,7 @@ class TypeText(ft.Row):
             if not char.isascii():
                 continue
             if char in need_convert_char:
+                self._slow_mode()
                 self.pynput_keyboard.press(KeyboardKey.shift_l)
                 self.pynput_keyboard.press(
                     mapping_convert_char[need_convert_char.index(char)])
@@ -121,18 +124,18 @@ class TypeText(ft.Row):
                 self.pynput_keyboard.release(KeyboardKey.shift_l)
                 self.pynput_keyboard.release(
                     mapping_convert_char[need_convert_char.index(char)])
-                self._slow_mode()
             elif char == " ":
                 self.pynput_keyboard.press(KeyboardKey.space)
                 self.pynput_keyboard.release(KeyboardKey.space)
             else:
                 self.pynput_keyboard.press(char)
                 self.pynput_keyboard.release(char)
+            self._slow_mode(0.02)
             time.sleep(0.01)
-    
-    def _slow_mode(self):
+
+    def _slow_mode(self, hard_sleep_time: int = None):
         if getattr(sys_config, "slow_mode"):
-            time.sleep(getattr(sys_config, "slow_mode_time"))
+            time.sleep(hard_sleep_time if hard_sleep_time else getattr(sys_config, "slow_mode_time"))
 
 
 class TypeTextListView(ft.ListView):
@@ -171,9 +174,9 @@ class TypeTextListView(ft.ListView):
             for control in self.controls:
                 if isinstance(control, TypeText) and control.type_str_field.value != "":
                     f.write(control.type_str_field.value + "\n")
-        
+
         self.trigger_snack_bar(e, "Saved")
-    
+
     def _new_drag_target(self, content: TypeText):
         return ft.Container(
             ft.DragTarget(
@@ -193,7 +196,7 @@ def main(page: ft.Page):
     page.window.always_on_top = True
     page.bgcolor = ft.colors.GREY_800
     page.theme_mode = ft.ThemeMode.DARK
-       
+
     def trigger_snack_bar(e, text):
         snack_bar = ft.SnackBar(
             content=ft.Text(text, color=ft.colors.BLACK, weight=ft.FontWeight.BOLD),
@@ -215,7 +218,7 @@ def main(page: ft.Page):
 
     def save_content(e):
         type_text_list_view.save_content(e)
-    
+
     page.appbar = ft.AppBar(
         leading=ft.Icon(ft.icons.KEYBOARD_OUTLINED),
         leading_width=40,
