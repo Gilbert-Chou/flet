@@ -4,7 +4,7 @@ import keyboard
 import platform
 import flet as ft
 
-from config_singleton import sys_config
+from config_singleton import sys_config, data_config
 from pynput.keyboard import Controller as KeyboardController
 from pynput.keyboard import Key as KeyboardKey
 
@@ -143,38 +143,27 @@ class TypeTextListView(ft.ListView):
     def __init__(self: ft.Switch, trigger_snack_bar, save_path=""):
         super().__init__(expand=1)
         self.trigger_snack_bar = trigger_snack_bar
-        self.save_path = self.get_save_path() if save_path == "" else save_path
         self.controls = []
-
-    def get_save_path(self):
-        if platform.system() == 'Windows':
-            return os.getenv('LOCALAPPDATA') + "\\Lazy_typewriter\\type_content.txt"
-        elif platform.system() == 'Darwin':
-            return os.getenv('HOME') + "/Library/Application Support/Lazy_typewriter/type_content.txt"
-
-    def restore_saved_content(self):
-        if os.path.exists(self.save_path):
-            with open(self.save_path, "r", encoding='utf-8') as f:
-                for line in f.readlines():
-                    self.controls.append(self._new_drag_target(TypeText(
-                        self, self.trigger_snack_bar, type_str_field_value=line.strip())))
-        if self.controls == []:
-            self.controls.append(self._new_drag_target(TypeText(self, self.trigger_snack_bar)))
-        self.update()
 
     def add_typing_text_field(self, e):
         self.controls.insert(0, self._new_drag_target(TypeText(self, self.trigger_snack_bar)))
         self.update()
 
+    def restore_saved_content(self):
+        for line in data_config.load_type_content():
+            self.controls.append(self._new_drag_target(TypeText(
+                self, self.trigger_snack_bar, type_str_field_value=line['content'].strip())))
+        if self.controls == []:
+            self.controls.append(self._new_drag_target(TypeText(self, self.trigger_snack_bar)))
+        self.update()
+
     def save_content(self, e):
-        if not os.path.exists(os.path.dirname(self.save_path)):
-            os.makedirs(os.path.dirname(self.save_path))
+        content = []
+        for control in self.controls:
+            if isinstance(control, ft.Container) and control.content.content.type_str_field.value != "":
+                content.append({"content": control.content.content.type_str_field.value, "note": ""})
 
-        with open(self.save_path, "w", encoding='utf-8') as f:
-            for control in self.controls:
-                if isinstance(control, TypeText) and control.type_str_field.value != "":
-                    f.write(control.type_str_field.value + "\n")
-
+        data_config.save_type_content(content)
         self.trigger_snack_bar(e, "Saved")
 
     def _new_drag_target(self, content: TypeText):
