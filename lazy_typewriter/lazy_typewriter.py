@@ -3,7 +3,7 @@ import keyboard
 import platform
 import flet as ft
 
-from utils import trigger_snack_bar
+from utils import trigger_snack_bar, find_page
 from config_singleton import sys_config, data_config
 from pynput.keyboard import Controller as KeyboardController
 from pynput.keyboard import Key as KeyboardKey
@@ -177,7 +177,7 @@ class TypeTextExpansionPanel(ft.ExpansionPanel):
         self.content = ft.ListTile(
             title=self.note,
             content_padding=ft.padding.only(left=50, right=10),
-            trailing=ft.IconButton(ft.icons.MODE_OUTLINED, data=self),
+            trailing=ft.IconButton(ft.icons.MODE_OUTLINED, data=self, on_click=self._edit_note),
         )
 
     @property
@@ -199,6 +199,31 @@ class TypeTextExpansionPanel(ft.ExpansionPanel):
 
     def get_drag_icon(self):
         return self.type_text.drag_icon
+    
+    def _edit_note(self, e):
+
+        page = find_page(self.parent)
+
+        def handle_close(e):
+            if e.control.text == "Save":
+                self.note.value = note_field.value
+                self.get_list_view().update()
+                trigger_snack_bar(self.get_list_view().parent, "Changed")
+            page.close(dialog)
+
+        text_field_width = page.window.width * 0.8
+        text_field_width = text_field_width if text_field_width < 800 else 800
+        note_field = ft.TextField(value=self.note.value, multiline=True, cursor_color=ft.colors.BLACK, color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, expand=True, width=text_field_width, bgcolor=ft.colors.GREY_400)
+        dialog = ft.AlertDialog(
+            modal=True,
+            content=note_field,
+            actions=[
+                ft.TextButton(text="Cancel", on_click=handle_close),
+                ft.TextButton(text="Save", on_click=handle_close),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.open(dialog)
 
 
 class TypeTextExpansionPanelList(ft.ExpansionPanelList):

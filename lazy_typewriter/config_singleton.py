@@ -13,7 +13,7 @@ class _SysConfig():
         return cls._instance
 
     def __init__(self):
-        self.pin = True
+        self.pin = False
         self.vm_mode = True
         self.slow_mode = False
         self.slow_mode_time = 0.12
