@@ -154,7 +154,7 @@ class TypeText(ft.Row):
 
 class TypeTextExpansionPanel(ft.ExpansionPanel):
 
-    def __init__(self, text: str = "", note: str = ""):
+    def __init__(self, text: str = "", note: str = "", color: str = ft.colors.BLACK45):
         super().__init__()
         self.type_text = TypeText(type_str_field_value=text.strip())
         new_content = ft.Container(
@@ -164,20 +164,27 @@ class TypeTextExpansionPanel(ft.ExpansionPanel):
             ),
             padding=ft.padding.symmetric(vertical=3)
         )
-        colors = [
-            ft.colors.GREEN_500,
-            ft.colors.BLUE_800,
-            ft.colors.RED_800,
-            ft.colors.BLACK45,
-        ]
-        self.bgcolor = colors[3]
+        self.bgcolor = color
         self.header = ft.ListTile(title=new_content)
-        self.note = ft.Text(note.strip())
+        self.note = ft.Text(note.strip(), expand=True)
 
         self.content = ft.ListTile(
-            title=self.note,
             content_padding=ft.padding.only(left=50, right=10),
-            trailing=ft.IconButton(ft.icons.MODE_OUTLINED, data=self, on_click=self._edit_note),
+            title=ft.Container(
+                content=ft.Row(
+                    [
+                        self.note,
+                        ft.Row(
+                            [
+                                ft.IconButton(ft.icons.COLOR_LENS, on_click=self._change_color),
+                                ft.IconButton(ft.icons.MODE_OUTLINED, on_click=self._edit_note),
+                            ],
+                            alignment=ft.MainAxisAlignment.END,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                ),
+            ),
         )
 
     @property
@@ -199,6 +206,16 @@ class TypeTextExpansionPanel(ft.ExpansionPanel):
 
     def get_drag_icon(self):
         return self.type_text.drag_icon
+
+    def _change_color(self, e):
+        colors = [
+            ft.colors.BLACK45,
+            ft.colors.GREEN_900,
+            ft.colors.BLUE_900,
+            ft.colors.RED_900,
+        ]
+        self.bgcolor = colors[(colors.index(self.bgcolor) + 1) % len(colors)]
+        self.update()
     
     def _edit_note(self, e):
 
@@ -240,7 +257,7 @@ class TypeTextExpansionPanelList(ft.ExpansionPanelList):
 
     def restore_saved_content(self):
         for line in data_config.load_type_content():
-            self.controls.append(TypeTextExpansionPanel(line['content'], line['note']))
+            self.controls.append(TypeTextExpansionPanel(line['content'], line['note'], line["color"]))
         if self.controls == []:
             self.controls.append(TypeTextExpansionPanel())
         self.update()
@@ -252,7 +269,7 @@ class TypeTextExpansionPanelList(ft.ExpansionPanelList):
                 type_content = control.text_value
                 if type_content != "":
                     note = control.note_value if control.note_value else ""
-                    content.append({"content": type_content, "note": note})
+                    content.append({"content": type_content, "note": note, "color": control.bgcolor})
 
         data_config.save_type_content(content)
         trigger_snack_bar(self.parent, "Saved")
