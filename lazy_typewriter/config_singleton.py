@@ -13,7 +13,7 @@ class _SysConfig():
         return cls._instance
 
     def __init__(self):
-        self.pin = True
+        self.pin = False
         self.vm_mode = True
         self.slow_mode = False
         self.slow_mode_time = 0.12
@@ -22,6 +22,7 @@ class _SysConfig():
 class TypeContent(TypedDict):
     note: str
     content: str
+    color: str
 
 
 class _DataConfig():
@@ -48,7 +49,7 @@ class _DataConfig():
         try:
             with open(self.save_path, "r", encoding='utf-8') as f:
                 type_content = json.load(f)
-                return [TypeContent(note=tc['note'], content=tc['content']) for tc in type_content['data']['list']]
+                return [TypeContent(note=tc['note'], content=tc['content'], color=tc.get('color', 'black45')) for tc in type_content['data']['list']]
         except FileNotFoundError:
             return []
 
@@ -57,7 +58,7 @@ class _DataConfig():
         if not os.path.exists(os.path.dirname(self.save_path)):
             os.makedirs(os.path.dirname(self.save_path))
 
-        list_content = [{'note': tc['note'], 'content': tc['content']} for tc in type_content]
+        list_content = [{'note': tc['note'], 'content': tc['content'], 'color': tc['color']} for tc in type_content]
         with open(self.save_path, "w", encoding='utf-8') as f:
             json.dump({"data": {"list": list_content}}, f, ensure_ascii=False, indent=4)
 
