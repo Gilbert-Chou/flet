@@ -7,10 +7,10 @@ def find_page(control: ft.Control) -> ft.Page:
 
 def trigger_snack_bar(control: ft.Control, text):
     snack_bar = ft.SnackBar(
-        content=ft.Text(text, color=ft.colors.BLACK, weight=ft.FontWeight.BOLD),
+        content=ft.Text(text, color=ft.Colors.BLACK, weight=ft.FontWeight.BOLD),
         show_close_icon=True,
         duration=500,
-        bgcolor=ft.colors.GREEN_400,
+        bgcolor=ft.Colors.GREEN_400,
     )
     snack_bar.open = True
     page = find_page(control)

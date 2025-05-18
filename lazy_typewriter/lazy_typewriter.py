@@ -12,7 +12,7 @@ from pynput.keyboard import Key as KeyboardKey
 class SettingPopupMenuItem(ft.PopupMenuItem):
 
     def __init__(self, page: ft.Page, text: str, config_name: str, customized_on_click=None):
-        check_icon = ft.Icon(ft.icons.CHECK if getattr(sys_config, config_name) else "", size=20) 
+        check_icon = ft.Icon(ft.Icons.CHECK if getattr(sys_config, config_name) else "", size=20) 
         container = ft.Container(
             content=ft.Row(
                 [check_icon, ft.Text(text)],
@@ -23,7 +23,7 @@ class SettingPopupMenuItem(ft.PopupMenuItem):
         def on_click(e):
             is_checked_now = not getattr(sys_config, config_name)
             setattr(sys_config, config_name, is_checked_now)
-            check_icon.name = ft.icons.CHECK if is_checked_now else ""
+            check_icon.name = ft.Icons.CHECK if is_checked_now else ""
             if customized_on_click:
                 customized_on_click(e)
             page.update()
@@ -35,19 +35,19 @@ class TypeText(ft.Row):
 
     def __init__(self, type_str_field_value=""):
         super().__init__()
-        self.type_str_field = ft.TextField(value=type_str_field_value, cursor_color=ft.colors.BLACK,
-                                           color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, expand=True, width=300, bgcolor=ft.colors.GREY_400)
-        self.drag_icon = ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.80)
+        self.type_str_field = ft.TextField(value=type_str_field_value, cursor_color=ft.Colors.BLACK,
+                                           color=ft.Colors.BLACK, text_align=ft.TextAlign.LEFT, expand=True, width=300, bgcolor=ft.Colors.GREY_400)
+        self.drag_icon = ft.Icon(ft.Icons.DRAG_INDICATOR, scale=1.80)
         self.pynput_keyboard = KeyboardController()
 
         self.controls = [
             ft.Draggable(
                 content=self.drag_icon,
-                content_when_dragging=ft.Icon(ft.icons.DRAG_INDICATOR, scale=1.8, color=ft.colors.PRIMARY),
+                content_when_dragging=ft.Icon(ft.Icons.DRAG_INDICATOR, scale=1.8, color=ft.Colors.PRIMARY),
             ),
             self.type_str_field,
-            ft.IconButton(ft.icons.KEYBOARD_RETURN, on_click=self.keyboard_type),
-            ft.IconButton(ft.icons.DELETE, on_click=self.delete_text_field)
+            ft.IconButton(ft.Icons.KEYBOARD_RETURN, on_click=self.keyboard_type),
+            ft.IconButton(ft.Icons.DELETE, on_click=self.delete_text_field)
         ]
     
     @property
@@ -85,7 +85,7 @@ class TypeText(ft.Row):
 
         return find_parent(self.parent)
 
-    def drag_accept(self, e: ft.DragTargetAcceptEvent):
+    def drag_accept(self, e):
         src = self.page.get_control(e.src_id)
         srcouce_index = None
         target_index = None
@@ -154,7 +154,7 @@ class TypeText(ft.Row):
 
 class TypeTextExpansionPanel(ft.ExpansionPanel):
 
-    def __init__(self, text: str = "", note: str = "", color: str = ft.colors.BLACK45):
+    def __init__(self, text: str = "", note: str = "", color: str = ft.Colors.BLACK45):
         super().__init__()
         self.type_text = TypeText(type_str_field_value=text.strip())
         new_content = ft.Container(
@@ -176,8 +176,8 @@ class TypeTextExpansionPanel(ft.ExpansionPanel):
                         self.note,
                         ft.Row(
                             [
-                                ft.IconButton(ft.icons.COLOR_LENS, on_click=self._change_color),
-                                ft.IconButton(ft.icons.MODE_OUTLINED, on_click=self._edit_note),
+                                ft.IconButton(ft.Icons.COLOR_LENS, on_click=self._change_color),
+                                ft.IconButton(ft.Icons.MODE_OUTLINED, on_click=self._edit_note),
                             ],
                             alignment=ft.MainAxisAlignment.END,
                         ),
@@ -209,10 +209,10 @@ class TypeTextExpansionPanel(ft.ExpansionPanel):
 
     def _change_color(self, e):
         colors = [
-            ft.colors.BLACK45,
-            ft.colors.GREEN_900,
-            ft.colors.BLUE_900,
-            ft.colors.RED_900,
+            ft.Colors.BLACK45,
+            ft.Colors.GREEN_900,
+            ft.Colors.BLUE_900,
+            ft.Colors.RED_900,
         ]
         self.bgcolor = colors[(colors.index(self.bgcolor) + 1) % len(colors)]
         self.update()
@@ -230,7 +230,7 @@ class TypeTextExpansionPanel(ft.ExpansionPanel):
 
         text_field_width = page.window.width * 0.8
         text_field_width = text_field_width if text_field_width < 800 else 800
-        note_field = ft.TextField(value=self.note.value, multiline=True, cursor_color=ft.colors.BLACK, color=ft.colors.BLACK, text_align=ft.TextAlign.LEFT, expand=True, width=text_field_width, bgcolor=ft.colors.GREY_400)
+        note_field = ft.TextField(value=self.note.value, multiline=True, cursor_color=ft.Colors.BLACK, color=ft.Colors.BLACK, text_align=ft.TextAlign.LEFT, expand=True, width=text_field_width, bgcolor=ft.Colors.GREY_400)
         dialog = ft.AlertDialog(
             modal=True,
             content=note_field,
@@ -248,8 +248,8 @@ class TypeTextExpansionPanelList(ft.ExpansionPanelList):
     def __init__(self):
         super().__init__()
         self.controls = []
-        self.expand_icon_color = ft.colors.AMBER
-        self.divider_color = ft.colors.AMBER
+        self.expand_icon_color = ft.Colors.AMBER
+        self.divider_color = ft.Colors.AMBER
 
     def add_typing_text_field(self, e):
         self.controls.insert(0, TypeTextExpansionPanel())
@@ -282,7 +282,7 @@ def main(page: ft.Page):
     page.window.min_height = 470
     page.window.min_width = 500
     page.window.always_on_top = getattr(sys_config, "pin")
-    page.bgcolor = ft.colors.GREY_800
+    page.bgcolor = ft.Colors.GREY_800
     page.theme_mode = ft.ThemeMode.DARK
 
     type_text_list_view = TypeTextExpansionPanelList()
@@ -299,14 +299,14 @@ def main(page: ft.Page):
         type_text_list_view.save_content(e)
 
     page.appbar = ft.AppBar(
-        leading=ft.Icon(ft.icons.KEYBOARD_OUTLINED),
+        leading=ft.Icon(ft.Icons.KEYBOARD_OUTLINED),
         leading_width=40,
         title=ft.Text("Lazy typewriter"),
         center_title=False,
-        bgcolor=ft.colors.BLACK45,
+        bgcolor=ft.Colors.BLACK45,
         actions=[
-            ft.IconButton(ft.icons.ADD, on_click=add_typing_text_field),
-            ft.IconButton(ft.icons.SAVE, on_click=save_content),
+            ft.IconButton(ft.Icons.ADD, on_click=add_typing_text_field),
+            ft.IconButton(ft.Icons.SAVE, on_click=save_content),
             ft.PopupMenuButton(
                 items=[
                     SettingPopupMenuItem(page=page, text="VM mode", config_name="vm_mode"),
